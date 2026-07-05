@@ -51,6 +51,7 @@ import javax.crypto.SecretKey;
 import java.net.InetSocketAddress;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 
 public class LoginEncryptionUtils {
@@ -124,7 +125,25 @@ public class LoginEncryptionUtils {
                     return;
                 }
             }
-            session.setAuthData(new AuthData(extraData.displayName, extraData.identity, xuid, issuedAt, extraData.minecraftId));
+
+            String displayName = extraData.displayName;
+            if (displayName == null || displayName.isBlank()) {
+                displayName = data.getUsername();
+            }
+            if (displayName == null || displayName.isBlank()) {
+                displayName = "Player";
+            }
+
+            if (xuid == null || xuid.isBlank()) {
+                UUID selfSignedId = data.getSelfSignedId();
+                if (selfSignedId != null) {
+                    xuid = selfSignedId.toString().replace("-", "");
+                } else {
+                    xuid = UUID.randomUUID().toString().replace("-", "");
+                }
+            }
+
+            session.setAuthData(new AuthData(displayName, extraData.identity, xuid, issuedAt, extraData.minecraftId));
 
             try {
                 startEncryptionHandshake(session, identityPublicKey);
